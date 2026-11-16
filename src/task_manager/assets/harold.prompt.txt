@@ -1,0 +1,6 @@
+Asset: harold.png (63 x 63 PNG). Generated with the built-in image_gen tool,
+then prepared for display with Tkinter integer subsampling. No runtime image
+library or network access is required.
+
+Prompt:
+Create ONE square raster avatar asset for a Tkinter desktop application. The first attached screenshot is a REFERENCE IMAGE, especially the tiny portrait at its upper left. The second screenshot is UI reference only. Output ONLY the isolated avatar, no UI, no text. Match the first screenshot's character closely: a mild older office clerk in three-quarter profile facing LEFT, peach light skin, bald forehead and crown, gray hair at back and sides, thick black rectangular glasses low on nose, large nose, small pleasant awkward smile, clean shaven (NO moustache, NO beard), brown/tan checked shirt with collar. Classic 1990s computer-game pixel art, clear stepped black 1-pixel outlines, flat limited palette, visible square pixels, no smooth shading, no blur, no modern vector look. Bust portrait shoulders to top of head, tightly framed, head large and recognizable, 64 by 64 pixel art design intended to be displayed at 64px. Plain WHITE square background, character fills nearly entire square with 3px white margin, no border, no rounded card or shadow.

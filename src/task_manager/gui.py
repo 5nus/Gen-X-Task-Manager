@@ -1,103 +1,165 @@
-"""Small Tkinter desktop interface; all task changes go through TaskService."""
+"""Classic desktop interface; task rules remain in TaskService."""
 
 import sqlite3
 import tkinter as tk
 from dataclasses import replace
-from datetime import datetime
-from tkinter import messagebox, ttk
-from tkinter.scrolledtext import ScrolledText
 from typing import Optional
 
+from .harold import HaroldMessenger
+from .date_picker import DateTimeInput
 from .models import Task
 from .service import TaskService
 
 
-def _parse_time(text: str) -> Optional[datetime]:
-    if not text.strip():
-        return None
-    try:
-        value = datetime.fromisoformat(text.strip())
-    except ValueError:
-        raise ValueError("Zeitpunkt als Datum und Uhrzeit mit Zeitzone eingeben.") from None
-    if value.utcoffset() is None:
-        raise ValueError("Die Zeitzone fehlt, z. B. +01:00 oder +00:00.")
-    return value
+GRAY = "#C0C0C0"
+NAVY = "#000080"
+WHITE = "#FFFFFF"
+BLACK = "#000000"
+FONT = ("Helvetica", 9)
+PRIORITIES = {1: "Low", 2: "Normal", 3: "High"}
+FORM_TITLE = "New task"
+
+
+def _button(parent, text, command):
+    return tk.Button(
+        parent, text=text, command=command, bg=GRAY, fg=BLACK,
+        activebackground=GRAY, activeforeground=BLACK, font=FONT,
+        relief="raised", borderwidth=2, padx=8, pady=3, highlightthickness=1,
+        highlightbackground=BLACK, highlightcolor=BLACK,
+    )
+
+
+def _notice(parent, title: str, text: str, *, confirm: bool = False) -> bool:
+    """Use our own modal so button language and styling do not depend on the OS."""
+    previous_grab = parent.grab_current()
+    dialog = tk.Toplevel(parent, bg=GRAY, borderwidth=2, relief="raised")
+    dialog.title(title)
+    dialog.transient(parent)
+    dialog.resizable(False, False)
+    tk.Label(dialog, text=title, bg=NAVY, fg=WHITE, font=FONT,
+             anchor="w", padx=6, pady=4).pack(fill="x", padx=3, pady=3)
+    tk.Label(dialog, text=text, bg=GRAY, fg=BLACK, font=FONT, justify="left",
+             wraplength=440, padx=16, pady=16).pack(fill="x")
+    buttons = tk.Frame(dialog, bg=GRAY)
+    buttons.pack(fill="x", padx=12, pady=(0, 12))
+    result = False
+
+    def close(authorized=False):
+        nonlocal result
+        result = authorized
+        dialog.destroy()
+
+    if confirm:
+        _button(buttons, "Delete", lambda: close(True)).pack(side="left", padx=4)
+        cancel = _button(buttons, "Cancel", close)
+    else:
+        cancel = _button(buttons, "OK", close)
+    cancel.pack(side="right", padx=4)
+    dialog.bind("<Escape>", lambda event: close())
+    dialog.protocol("WM_DELETE_WINDOW", close)
+    dialog.grab_set()
+    cancel.focus_set()
+    parent.wait_window(dialog)
+    if previous_grab is not None and previous_grab.winfo_exists():
+        previous_grab.grab_set()
+    return result
 
 
 def _error(parent, error: Exception) -> None:
     if isinstance(error, KeyError):
-        text = "Diese Aufgabe existiert nicht mehr. Bitte die Liste aktualisieren."
+        text = "This task no longer exists. Refresh the list."
     elif isinstance(error, sqlite3.Error):
-        text = f"Datenbankfehler: {error}\nDie Änderung konnte nicht vollständig gespeichert werden."
+        text = ("Could not save changes. "
+                "Some fields may already have been saved. "
+                "Refresh the list and try again.")
     else:
         text = str(error)
-    messagebox.showerror("Änderung nicht möglich", text, parent=parent)
+    _notice(parent, "Error", text)
 
 
 class TaskDialog(tk.Toplevel):
     def __init__(self, app: "TaskApp", task: Optional[Task] = None) -> None:
-        super().__init__(app.root)
+        super().__init__(app.root, bg=GRAY, borderwidth=2, relief="raised")
         self.app = app
         self.task = task
-        self.title("Aufgabe bearbeiten" if task else "Neue Aufgabe")
+        self.title("Edit task" if task else FORM_TITLE)
         self.transient(app.root)
         self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=1)
-        self.minsize(480, 500)
-        form = ttk.Frame(self, padding=16)
-        form.grid(sticky="nsew")
+        self.rowconfigure(1, weight=1)
+        self.minsize(520, 530)
+        tk.Label(self, text="Edit task" if task else FORM_TITLE,
+                 bg=NAVY, fg=WHITE, anchor="w", padx=6, pady=5).grid(
+                     row=0, sticky="ew", padx=3, pady=3)
+        form = tk.LabelFrame(self, text="Task details",
+                             bg=GRAY, fg=BLACK, relief="groove", borderwidth=2, padx=8, pady=6)
+        form.grid(row=1, sticky="nsew", padx=6, pady=4)
         form.columnconfigure(0, weight=1)
         form.rowconfigure(5, weight=1)
 
-        ttk.Label(form, text="Titel (1–200 Zeichen)").grid(row=0, sticky="w")
-        self.title_input = tk.Text(form, height=3, width=56, wrap="word")
-        self.title_input.grid(row=1, sticky="ew", pady=(4, 12))
-        ttk.Label(form, text="Priorität (3 = höchste)").grid(row=2, sticky="w")
-        self.priority = tk.StringVar(self, str(task.priority if task else 2))
-        ttk.Combobox(form, textvariable=self.priority, values=(3, 2, 1),
-                     state="readonly", width=5).grid(row=3, sticky="w", pady=(4, 12))
-        ttk.Label(form, text="Beschreibung (für längere Inhalte)").grid(row=4, sticky="w")
-        self.description_input = ScrolledText(form, height=7, width=56, wrap="word")
-        self.description_input.grid(row=5, sticky="nsew", pady=(4, 12))
-        ttk.Label(form, text="Fällig am (optional)").grid(row=6, sticky="w")
-        self.due_input = ttk.Entry(form)
-        self.due_input.grid(row=7, sticky="ew", pady=(4, 12))
-        ttk.Label(form, text="Erinnern am (optional)").grid(row=8, sticky="w")
-        self.reminder_input = ttk.Entry(form)
-        self.reminder_input.grid(row=9, sticky="ew", pady=(4, 4))
-        ttk.Label(form, text="Format: 2026-11-16T14:30+01:00; leer = kein Zeitpunkt.\n"
-                  "Erinnerungen werden gespeichert; Benachrichtigungen folgen später.",
-                  wraplength=440).grid(row=10, sticky="w", pady=(0, 12))
-        buttons = ttk.Frame(form)
-        buttons.grid(row=11, sticky="e")
-        ttk.Button(buttons, text="Abbrechen", command=self.destroy).pack(side="left", padx=8)
-        self.save_button = ttk.Button(buttons, text="Speichern", command=self.save)
-        self.save_button.pack(side="left")
+        tk.Label(form, text="Title (1–200 characters)").grid(row=0, sticky="w")
+        self.title_input = tk.Text(form, height=3, width=58, wrap="word", bg=WHITE,
+                                   fg=BLACK, insertbackground=BLACK, relief="sunken", borderwidth=2)
+        self.title_input.grid(row=1, sticky="ew", pady=(2, 6))
+        tk.Label(form, text="Priority").grid(row=2, sticky="w")
+        self.priority = tk.StringVar(self, PRIORITIES[task.priority if task else 2])
+        self.priority_menu = tk.OptionMenu(form, self.priority, "High", "Normal", "Low")
+        self.priority_menu.configure(bg=GRAY, fg=BLACK, relief="raised", borderwidth=2,
+                                     highlightthickness=0, activebackground=GRAY, font=FONT)
+        self.priority_menu["menu"].configure(bg=GRAY, fg=BLACK, activebackground=NAVY,
+                                             activeforeground=WHITE, font=FONT)
+        self.priority_menu.grid(row=3, sticky="w", pady=(2, 6))
+        tk.Label(form, text="Description").grid(row=4, sticky="w")
+        statement = tk.Frame(form, bg=GRAY)
+        statement.grid(row=5, sticky="nsew", pady=(2, 6))
+        statement.columnconfigure(0, weight=1)
+        statement.rowconfigure(0, weight=1)
+        self.description_input = tk.Text(statement, height=6, width=58, wrap="word", bg=WHITE,
+                                         fg=BLACK, insertbackground=BLACK, relief="sunken", borderwidth=2)
+        self.description_input.grid(sticky="nsew")
+        scrollbar = tk.Scrollbar(statement, command=self.description_input.yview,
+                                 bg=GRAY, troughcolor=GRAY, relief="raised", borderwidth=2)
+        scrollbar.grid(row=0, column=1, sticky="ns")
+        self.description_input.configure(yscrollcommand=scrollbar.set)
+        tk.Label(form, text="Due (optional)").grid(row=6, sticky="w")
+        self.due_picker = DateTimeInput(form, task.due_at if task else None)
+        self.due_picker.grid(row=7, sticky="ew", pady=(2, 6))
+        self.due_input = self.due_picker.entry
+        tk.Label(form, text="Reminder (optional)").grid(row=8, sticky="w")
+        self.reminder_picker = DateTimeInput(form, task.remind_at if task else None)
+        self.reminder_picker.grid(row=9, sticky="ew", pady=(2, 4))
+        self.reminder_input = self.reminder_picker.entry
+        tk.Label(form, text="Date: MM/DD/YYYY or MM-DD-YYYY. Time: local, 24-hour.\n"
+                 "Reminder times are stored; notifications are not available.",
+                 justify="left", anchor="w").grid(row=10, sticky="w")
+        buttons = tk.Frame(self, bg=GRAY, borderwidth=1, relief="sunken")
+        buttons.grid(row=2, sticky="ew", padx=6, pady=6)
+        _button(buttons, "Cancel", self.destroy).pack(side="left", padx=5, pady=5)
+        self.save_button = _button(buttons, "Save", self.save)
+        self.save_button.pack(side="right", padx=5, pady=5)
         if task:
             self.title_input.insert("1.0", task.title)
             self.description_input.insert("1.0", task.description or "")
-            if task.due_at:
-                self.due_input.insert(0, task.due_at.isoformat())
-            if task.remind_at:
-                self.reminder_input.insert(0, task.remind_at.isoformat())
         self.bind("<Escape>", lambda event: self.destroy())
         self.title_input.focus_set()
         self.grab_set()
 
     def save(self) -> None:
         try:
+            classification = self.priority.get()
+            priority = next((number for number, name in PRIORITIES.items() if name == classification), None)
+            if priority is None:
+                raise ValueError("Select Low, Normal or High priority.")
             values = dict(
                 title=self.title_input.get("1.0", "end-1c"),
-                priority=int(self.priority.get()),
+                priority=priority,
                 description=self.description_input.get("1.0", "end-1c") or None,
-                due_at=_parse_time(self.due_input.get()),
-                remind_at=_parse_time(self.reminder_input.get()),
+                due_at=self.due_picker.get(),
+                remind_at=self.reminder_picker.get(),
             )
             if self.task is None:
                 self.app.service.create(**values)
             else:
-                # Validate all model fields before the first write. Compare with
-                # the displayed snapshot so untouched fields are never written.
+                # Compare against the displayed snapshot; untouched fields stay untouched.
                 candidate = replace(self.task, **values)
                 if candidate.title.strip() != self.task.title:
                     self.app.service.update_title(self.task.id, candidate.title)
@@ -116,41 +178,78 @@ class TaskApp:
     def __init__(self, root: tk.Tk, service: TaskService) -> None:
         self.root = root
         self.service = service
-        root.title("Aufgaben")
-        root.geometry("760x600")
-        root.minsize(480, 320)
+        root.option_add("*Font", FONT)
+        root.option_add("*Background", GRAY)
+        root.option_add("*Foreground", BLACK)
+        root.option_add("*activeBackground", NAVY)
+        root.option_add("*activeForeground", WHITE)
+        root.option_add("*selectBackground", NAVY)
+        root.option_add("*selectForeground", WHITE)
+        root.configure(bg=GRAY, borderwidth=2, relief="raised")
+        root.title("Gen X Task Manager")
+        root.geometry("820x620")
+        root.minsize(480, 400)
         root.columnconfigure(0, weight=1)
-        root.rowconfigure(1, weight=1)
-        toolbar = ttk.Frame(root, padding=12)
-        toolbar.grid(row=0, sticky="ew")
-        ttk.Label(toolbar, text="Aufgaben · Priorität 3 zuerst").pack(side="left")
-        ttk.Button(toolbar, text="Neue Aufgabe", command=self.new_task).pack(side="right")
-        ttk.Button(toolbar, text="Aktualisieren", command=self.refresh).pack(side="right", padx=8)
-        area = ttk.Frame(root)
-        area.grid(row=1, sticky="nsew", padx=12)
+        root.rowconfigure(2, weight=1)
+        self.messenger = HaroldMessenger(root)
+        self._menus()
+        header = tk.Frame(root, bg=NAVY, borderwidth=1, relief="solid")
+        header.grid(row=0, sticky="ew", padx=4, pady=4)
+        tk.Label(header, text="Gen X Task Manager", bg=NAVY,
+                 fg=WHITE, anchor="w", font=("Helvetica", 11, "bold"), wraplength=440,
+                 justify="left", padx=6, pady=4).pack(fill="x")
+        toolbar = tk.Frame(root, bg=GRAY, borderwidth=2, relief="raised")
+        toolbar.grid(row=1, sticky="ew", padx=4, pady=(0, 4))
+        _button(toolbar, "Add task", self.new_task).pack(side="left", padx=4, pady=4)
+        _button(toolbar, "Refresh", self.refresh).pack(side="left", padx=4, pady=4)
+        _button(toolbar, "Harold Messenger", self.messenger.open).pack(side="left", padx=4, pady=4)
+        area = tk.LabelFrame(root, text="Tasks",
+                             bg=GRAY, fg=BLACK, borderwidth=2, relief="groove", padx=4, pady=4)
+        area.grid(row=2, sticky="nsew", padx=4, pady=4)
         area.columnconfigure(0, weight=1)
         area.rowconfigure(0, weight=1)
-        self.canvas = tk.Canvas(area, highlightthickness=0)
+        self.canvas = tk.Canvas(area, bg=WHITE, borderwidth=2, relief="sunken", highlightthickness=0)
         self.canvas.grid(row=0, column=0, sticky="nsew")
-        scrollbar = ttk.Scrollbar(area, orient="vertical", command=self.canvas.yview)
+        scrollbar = tk.Scrollbar(area, orient="vertical", command=self.canvas.yview,
+                                 bg=GRAY, troughcolor=GRAY, relief="raised", borderwidth=2)
         scrollbar.grid(row=0, column=1, sticky="ns")
         self.canvas.configure(yscrollcommand=scrollbar.set)
-        self.rows = ttk.Frame(self.canvas)
+        self.rows = tk.Frame(self.canvas, bg=GRAY)
         self.rows.columnconfigure(0, weight=1)
         self.window = self.canvas.create_window(0, 0, anchor="nw", window=self.rows)
         self.rows.bind("<Configure>", self._resize_content)
         self.canvas.bind("<Configure>", self._resize_canvas)
         self.canvas.bind("<Button-4>", lambda event: self.canvas.yview_scroll(-1, "units"))
         self.canvas.bind("<Button-5>", lambda event: self.canvas.yview_scroll(1, "units"))
-        self.status = tk.StringVar(root)
-        ttk.Label(root, textvariable=self.status, padding=12).grid(row=2, sticky="w")
         self.refresh()
+
+    def _menus(self) -> None:
+        self.menu = tk.Menu(self.root, bg=GRAY, fg=BLACK, activebackground=NAVY,
+                            activeforeground=WHITE, relief="raised", borderwidth=2, tearoff=False)
+        for name in ("File", "Tasks", "Help"):
+            menu = tk.Menu(self.menu, tearoff=False, bg=GRAY, fg=BLACK,
+                           activebackground=NAVY, activeforeground=WHITE, font=FONT)
+            self.menu.add_cascade(label=name, menu=menu)
+            if name == "File":
+                menu.add_command(label="Add task", command=self.new_task)
+                menu.add_separator()
+                menu.add_command(label="Exit", command=self.root.destroy)
+            elif name == "Tasks":
+                menu.add_command(label="Refresh", command=self.refresh)
+            else:
+                menu.add_command(label="About", command=self.show_help)
+        self.root.configure(menu=self.menu)
+
+    def show_help(self) -> None:
+        _notice(self.root, "About", "Gen X Task Manager\n\n"
+                "Priority: High (3), Normal (2), Low (1).\n"
+                "Reminder times are stored; notifications are not available.")
 
     def _resize_content(self, event) -> None:
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def _resize_canvas(self, event) -> None:
-        self.canvas.itemconfigure(self.window, width=event.width)
+        self.canvas.itemconfigure(self.window, width=max(1, event.width - 4))
 
     def new_task(self) -> TaskDialog:
         return TaskDialog(self)
@@ -159,16 +258,14 @@ class TaskApp:
         return TaskDialog(self, task)
 
     def delete_task(self, task: Task) -> None:
-        if not messagebox.askyesno(
-            "Aufgabe dauerhaft löschen?",
-            f'„{task.title}“\n\nErledigen bedeutet dauerhaft löschen. Fortfahren?',
-            parent=self.root, icon="warning", default=messagebox.NO,
-        ):
+        if not _notice(self.root, "Delete task", "Permanently delete this task? This cannot be undone.", confirm=True):
             return
         try:
             self.service.delete(task.id)
         except (KeyError, sqlite3.Error) as error:
             _error(self.root, error)
+            self.refresh()
+            return
         self.refresh()
 
     def refresh(self) -> None:
@@ -180,26 +277,29 @@ class TaskApp:
         for child in self.rows.winfo_children():
             child.destroy()
         for index, task in enumerate(tasks):
-            row = ttk.Frame(self.rows, padding=12, relief="groove")
-            row.grid(row=index, column=0, sticky="ew", pady=(0, 8))
+            row = tk.LabelFrame(self.rows, text="Task", bg=GRAY,
+                                fg=BLACK, relief="groove", borderwidth=2, padx=6, pady=4)
+            row.grid(row=index, column=0, sticky="ew", padx=3, pady=3)
             row.columnconfigure(0, weight=1)
-            label = ttk.Label(row, text=task.title, anchor="w", justify="left", wraplength=400)
+            label = tk.Label(row, text=task.title, bg=NAVY, fg=WHITE, anchor="w",
+                             justify="left", wraplength=400, padx=4, pady=3)
             label.grid(row=0, column=0, sticky="ew")
-            row.bind("<Configure>", lambda event, title=label: title.configure(
-                wraplength=max(120, event.width - 32)
-            ))
-            detail = f"Priorität {task.priority}"
+            detail = f"Priority: {PRIORITIES[task.priority]}"
             if task.due_at:
-                detail += f" · Fällig: {task.due_at.isoformat()}"
+                detail += f"\nDue: {task.due_at.isoformat()}"
             if task.remind_at:
-                detail += " · Erinnerung gespeichert"
-            ttk.Label(row, text=detail, wraplength=400).grid(row=1, column=0, sticky="w", pady=6)
-            buttons = ttk.Frame(row)
-            buttons.grid(row=2, column=0, sticky="w")
-            ttk.Button(buttons, text="Bearbeiten", command=lambda task=task: self.edit_task(task)).pack(side="left")
-            ttk.Button(buttons, text="Erledigen / Löschen…",
-                       command=lambda task=task: self.delete_task(task)).pack(side="left", padx=8)
+                detail += f"\nReminder: {task.remind_at.isoformat()}"
+            detail_label = tk.Label(row, text=detail, justify="left", anchor="w", wraplength=400)
+            detail_label.grid(row=1, column=0, sticky="ew", pady=4)
+            row.bind("<Configure>", lambda event, title=label, details=detail_label: (
+                title.configure(wraplength=max(100, event.width - 28)),
+                details.configure(wraplength=max(100, event.width - 28)),
+            ))
+            buttons = tk.Frame(row, bg=GRAY, borderwidth=1, relief="sunken")
+            buttons.grid(row=2, column=0, sticky="ew")
+            _button(buttons, "Edit task", lambda task=task: self.edit_task(task)).pack(side="left", padx=3, pady=3)
+            _button(buttons, "Delete", lambda task=task: self.delete_task(task)).pack(side="left", padx=3, pady=3)
         if not tasks:
-            ttk.Label(self.rows, text="Keine Aufgaben. Lege eine neue Aufgabe an.",
-                      padding=16).grid(sticky="w")
-        self.status.set(f"{len(tasks)} Aufgaben")
+            tk.Label(self.rows, text="No tasks.\n"
+                     "Use Add task to get started.",
+                     justify="left", padx=12, pady=12, wraplength=400).grid(sticky="w")

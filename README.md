@@ -1,7 +1,31 @@
 # Gen X Task Manager
 
-Datenmodell, SQLite-Persistenz, TaskService und Tkinter-GUI für Python 3.9 oder neuer. Anwendung und Tests
-verwenden ausschließlich die Python-Standardbibliothek.
+Ein kleiner Linux-Task-Manager im Windows-95-Look: Aufgaben erstellen, bearbeiten,
+nach Priorität sortieren und nach Bestätigung dauerhaft löschen. Mit Kalender,
+Uhrzeitauswahl und Harold P. Wiggins, einem grundsätzlich abwesenden Büroangestellten
+in einem separaten Messenger.
+
+Die Anwendung ist eine frühe Version. Erinnerungszeitpunkte werden gespeichert;
+Erinnerungsbenachrichtigungen sind noch nicht implementiert. Harold antwortet nie
+direkt, verwendet keine KI und benötigt keine Netzwerkverbindung.
+
+Python 3.9 oder neuer, Tkinter und SQLite. Anwendung und Tests verwenden
+ausschließlich die Python-Standardbibliothek. Bisher getestet unter Linux mit
+Python 3.12 und Tk 8.6.
+
+## Schnellstart
+
+Python mit Tkinter muss installiert sein; unter Debian/Ubuntu heißen die
+Systempakete `python3` und `python3-tk`.
+
+```bash
+git clone https://github.com/5nus/Gen-X-Task-Manager.git
+cd Gen-X-Task-Manager
+PYTHONPATH=src python3 -m task_manager
+```
+
+Es ist keine Installation über pip erforderlich. Weitere Startoptionen,
+Datenbankpfade und Testbefehle stehen unten.
 
 ## Struktur
 
@@ -13,11 +37,18 @@ src/task_manager/
     repository.py
     service.py
     gui.py
+    date_picker.py
+    harold.py
+    assets/
+        harold.png
+        harold.prompt.txt
     __main__.py
 tests/
     test_persistence.py
     test_service.py
     test_gui.py
+    test_date_picker.py
+    test_harold.py
 ```
 
 ## Tests ausführen
@@ -168,22 +199,61 @@ weiterhin der letzte Schreibzugriff.
 
 ## GUI
 
-- Aufgaben werden mit Priorität 3 zuerst angezeigt. Lange Titel umbrechen abhängig
-  von der Fensterbreite; die Liste ist scrollbar.
-- „Neue Aufgabe“ und „Bearbeiten“ öffnen einen Dialog für Titel, Beschreibung,
-  Priorität, Fälligkeit und Erinnerungszeitpunkt. Nur tatsächlich bearbeitete
-  Felder werden geschrieben. Die Titelvalidierung bleibt im TaskService.
-- Zeitpunkte werden mit explizitem UTC-Offset eingegeben, beispielsweise
-  `2026-11-16T14:30+01:00`. Leere Eingaben entfernen optionale Zeitpunkte.
-- „Erledigen / Löschen…“ verlangt vor jedem Löschversuch eine Bestätigung.
-  „Nein“ ist die Voreinstellung. Ein Abbruch verändert keine Daten.
-- Validierungsfehler, fehlende Aufgaben und Datenbankfehler werden im Dialog
-  angezeigt. Das Formular bleibt bei Speicherfehlern offen. Änderungen mehrerer
-  Felder erfolgen weiterhin in einzelnen Repository-Transaktionen; bei einem
-  Datenbankfehler können zuvor gespeicherte Felder bereits geändert sein.
-- „Aktualisieren“ lädt den aktuellen Datenbankstand. Es gibt keinen Hintergrundprozess.
+- Klassische Tkinter-Widgets mit grauem Hintergrund `#C0C0C0`, dunkelblauen
+  Titelleisten, erhabenen Schaltflächen und vertieften Eingabefeldern erhalten
+  den Windows-95-Stil. Beschriftungen und Dialoge sind kurz und englisch.
+- „Add task“ und „Edit task“ öffnen Titel, Beschreibung, Priorität, Fälligkeit
+  und Erinnerungszeitpunkt. Low, Normal und High entsprechen Priorität 1, 2 und 3.
+  Aufgaben mit hoher Priorität stehen zuerst. Lange Titel umbrechen.
+- Fälligkeit und Erinnerung besitzen je einen anklickbaren Kalender mit
+  Monatsnavigation und Today-Schaltfläche. Datumeingaben akzeptieren
+  `MM/DD/YYYY`, `MM-DD-YYYY` und ISO-Daten. Monat steht beim US-Format zuerst.
+- Stunden und Minuten lassen sich über klassische Spinboxen auswählen oder
+  eintippen. Neue Eingaben verwenden die lokale Linux-Zeitzone, einschließlich
+  Sommerzeit, und das Repository speichert weiterhin UTC. Ungültige Daten,
+  Uhrzeiten und lokale Uhrzeiten in einer Sommerzeitlücke werden abgelehnt.
+- Vollständige ISO-Zeitpunkte mit UTC-Offset können weiterhin eingefügt werden;
+  beim Verlassen des Feldes werden sie in lokale Datum- und Uhrzeitfelder
+  übernommen. Unveränderte bestehende Zeitpunkte behalten Sekunden und
+  Mikrosekunden. Clear oder ein leeres Datumsfeld entfernt den Zeitpunkt.
+- „Delete“ verlangt eine Bestätigung. Cancel, Escape und das Schließen des
+  Dialogs brechen ab. Erfolgreiches Löschen benötigt keinen weiteren Dialog.
+- Validierungsfehler, fehlende Aufgaben und Datenbankfehler werden angezeigt.
+  Das Formular bleibt bei Speicherfehlern offen. Änderungen mehrerer Felder
+  verwenden weiterhin einzelne Repository-Transaktionen; zuvor gespeicherte
+  Felder können bei einem späteren Datenbankfehler bereits geändert sein.
+- „Refresh“ lädt den aktuellen Datenbankstand. Datenmodell, SQLite-Persistenz
+  und TaskService bleiben unverändert.
 
-Reminder-Prozess, IPC, Benachrichtigungen und wiederkehrende Aufgaben gehören
-nicht zu dieser Implementierung. Erinnerungszeitpunkte werden nur gespeichert.
-Ein späterer Reminder-Prozess darf ausschließlich noch vorhandene Aufgaben
-berücksichtigen.
+## Harold Messenger
+
+- „Harold Messenger“ öffnet ein separates, nicht modales Fenster mit Pixel-Avatar,
+  Harold P. Wiggins, Status „Away“, „Last seen: Unknown“, scrollbarem Verlauf,
+  Eingabe und Send-Button. Absender und lokale Uhrzeit stehen über jeder Nachricht;
+  die Uhrzeit bleibt beim erneuten Öffnen erhalten.
+  Wiederholtes Öffnen bringt dasselbe Fenster nach vorn.
+- Das Avatar-Asset liegt unter `src/task_manager/assets/harold.png`: ein älterer
+  Büroangestellter mit Halbglatze, grauem Haar, Brille und kariertem Hemd.
+  Es wurde mit dem eingebauten Bildgenerator anhand der Vorlage erstellt;
+  der verwendete Prompt liegt daneben in `harold.prompt.txt`.
+  Tkinter lädt das PNG direkt, ohne zusätzliche Bibliotheken.
+- Ab dem Anwendungsstart plant Tkinter mit `after()` in zufälligen Abständen von
+  3 bis 10 Minuten belanglose Nachrichten. Harold schreibt höchstens drei
+  Nachrichten pro Anwendungssitzung. Es gibt keine Threads oder Netzwerkzugriffe.
+- Harold schreibt unabhängig von Benutzernachrichten. Er antwortet niemals direkt
+  und kommentiert weder Aufgaben noch Benutzerverhalten.
+- Nicht leere Benutzernachrichten erscheinen im Verlauf. Jeder Sendeversuch,
+  einschließlich leerer Eingaben, öffnet ein separates „Messenger Service“-Fenster:
+  „The user you are trying to contact has not been at their desk for some time.“
+  Diese Meldung wird niemals im Chat angezeigt oder gespeichert.
+- OK, Escape und das Schließen-Kreuz schließen nur den Systemdialog. Er bleibt
+  auch beim Schließen des Chatfensters bestehen und blockiert keine anderen Fenster.
+- Der Chatverlauf und Harolds Nachrichtenlimit bleiben beim Schließen und erneuten
+  Öffnen des Chats erhalten. Auch bei geschlossenem Chat laufen die Timer weiter,
+  ohne Fenster automatisch zu öffnen. Beim Beenden der Anwendung werden offene
+  Timer abgebrochen. Eine neue Sitzung startet ohne Verlauf.
+- Harold-Daten liegen ausschließlich im Arbeitsspeicher. Es gibt keine Änderungen
+  an der Datenbank, keine KI, API, Desktop-Benachrichtigungen oder zusätzlichen Bibliotheken.
+
+Reminder-Prozess, IPC, Aufgabenbenachrichtigungen und wiederkehrende Aufgaben
+gehören nicht zu dieser Implementierung. Erinnerungszeitpunkte werden nur gespeichert.

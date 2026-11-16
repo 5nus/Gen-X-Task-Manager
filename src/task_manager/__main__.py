@@ -15,7 +15,7 @@ from .service import TaskService
 
 def main() -> int:
     data_home = Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share")
-    parser = argparse.ArgumentParser(description="Task Manager für Linux")
+    parser = argparse.ArgumentParser(description="Gen X Task Manager")
     parser.add_argument("--database", type=Path, default=data_home / "task-manager" / "tasks.sqlite3")
     args = parser.parse_args()
     root = None
@@ -26,7 +26,7 @@ def main() -> int:
             TaskApp(root, TaskService(TaskRepository(database)))
             root.mainloop()
     except (OSError, sqlite3.Error, tk.TclError) as error:
-        print(f"Task Manager konnte nicht gestartet werden: {error}", file=sys.stderr)
+        print(f"Gen X Task Manager could not open the database: {error}", file=sys.stderr)
         return 1
     finally:
         if root is not None:
