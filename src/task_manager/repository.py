@@ -2,7 +2,7 @@
 
 import sqlite3
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List, Mapping, Optional
 from uuid import UUID
 
 from .database import Database
@@ -50,16 +50,15 @@ class TaskRepository:
         self._connection = database.connection
 
     def create(self, task: Task) -> Task:
-        with self._connection:
-            self._connection.execute(
-                """
-                INSERT INTO tasks (
-                    title, description, priority, created_at,
-                    due_at, remind_at, reminder_sent, id
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                _create_values(task),
-            )
+        self._write(
+            """
+            INSERT INTO tasks (
+                title, description, priority, created_at,
+                due_at, remind_at, reminder_sent, id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            _create_values(task),
+        )
         return task
 
     def get(self, task_id: UUID) -> Optional[Task]:
@@ -75,9 +74,53 @@ class TaskRepository:
         return [_from_row(row) for row in rows]
 
     def _write(self, sql: str, parameters: tuple) -> bool:
+        # Do not commit a transaction owned by Database.transaction().
+        if self._connection.in_transaction:
+            return self._connection.execute(sql, parameters).rowcount == 1
         with self._connection:
             cursor = self._connection.execute(sql, parameters)
         return cursor.rowcount == 1
+
+    def update_fields(
+        self, task_id: UUID, changes: Mapping[str, object], *,
+        reset_reminder_if_changed: bool = False,
+    ) -> bool:
+        """Write an explicit set of fields atomically, preserving unrelated fields.
+
+        The service requests conditional status reset. SQL compares the current
+        stored timestamp, rather than a potentially stale application snapshot.
+        Field names are restricted before constructing SQL identifiers.
+        """
+        allowed = {"title", "description", "priority", "due_at", "remind_at"}
+        if not changes or set(changes) - allowed:
+            raise ValueError("Only editable task fields may be updated")
+        assignments = []
+        parameters = []
+        for name, value in changes.items():
+            assignments.append(f"{name} = ?")
+            parameters.append(_timestamp(value) if name in ("due_at", "remind_at") else value)
+        if reset_reminder_if_changed and "remind_at" in changes:
+            assignments.append(
+                "reminder_sent = CASE WHEN remind_at IS ? THEN reminder_sent ELSE 0 END"
+            )
+            parameters.append(_timestamp(changes["remind_at"]))
+        parameters.append(str(task_id))
+        return self._write(
+            f"UPDATE tasks SET {', '.join(assignments)} WHERE id = ?", tuple(parameters)
+        )
+
+    def list_due_reminders(self, now: datetime) -> List[Task]:
+        if not isinstance(now, datetime):
+            raise TypeError("now must be a datetime")
+        rows = self._connection.execute(
+            """
+            SELECT * FROM tasks
+            WHERE reminder_sent = 0 AND remind_at IS NOT NULL AND remind_at <= ?
+            ORDER BY remind_at, id
+            """,
+            (_timestamp(now),),
+        ).fetchall()
+        return [_from_row(row) for row in rows]
 
     def update_title(self, task_id: UUID, title: str) -> bool:
         if not isinstance(title, str):

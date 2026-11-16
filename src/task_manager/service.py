@@ -66,6 +66,22 @@ class TaskService:
     def list_all(self) -> List[Task]:
         return self._repository.list_all()
 
+    def update(self, task_id: UUID, **changes) -> None:
+        """Validate an explicit edit and persist all its fields together."""
+        allowed = {"title", "description", "priority", "due_at", "remind_at"}
+        if set(changes) - allowed:
+            raise ValueError("Only editable task fields may be updated")
+        current = self.get(task_id)
+        if not changes:
+            return
+        if "title" in changes:
+            changes["title"] = _normalize_title(changes["title"])
+        validated = replace(current, **changes)
+        values = {name: getattr(validated, name) for name in changes}
+        _require_updated(task_id, self._repository.update_fields(
+            task_id, values, reset_reminder_if_changed="remind_at" in values,
+        ))
+
     def update_title(self, task_id: UUID, title: str) -> None:
         title = _normalize_title(title)
         _require_updated(task_id, self._repository.update_title(task_id, title))
@@ -80,15 +96,7 @@ class TaskService:
         _require_updated(task_id, self._repository.update_due_at(task_id, due_at))
 
     def update_reminder(self, task_id: UUID, remind_at: Optional[datetime]) -> None:
-        task = self.get(task_id)
-        # Model validation also normalizes equivalent timezone offsets to UTC.
-        changed = replace(task, remind_at=remind_at)
-        if changed.remind_at == task.remind_at:
-            return
-        _require_updated(
-            task_id,
-            self._repository.update_reminder(task_id, changed.remind_at, reminder_sent=False),
-        )
+        self.update(task_id, remind_at=remind_at)
 
     def delete(self, task_id: UUID) -> None:
         _require_updated(task_id, self._repository.delete(task_id))

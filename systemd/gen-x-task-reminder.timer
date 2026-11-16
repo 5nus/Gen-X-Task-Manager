@@ -1,0 +1,13 @@
+[Unit]
+Description=Check Gen X Task Manager reminders every minute
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Timer]
+OnStartupSec=10s
+OnUnitInactiveSec=60s
+AccuracySec=5s
+Unit=gen-x-task-reminder.service
+
+[Install]
+WantedBy=graphical-session.target

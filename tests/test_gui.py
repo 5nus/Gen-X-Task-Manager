@@ -220,6 +220,36 @@ class GuiTests(unittest.TestCase):
         error.assert_called_once()
         self.assertTrue(dialog.winfo_exists())
 
+    def test_multiple_form_edits_roll_back_together_on_database_error(self):
+        task = self.service.create("Original", 1, description="Before")
+        dialog = self.app.edit_task(task)
+        dialog.title_input.delete("1.0", "end")
+        dialog.title_input.insert("1.0", "Edited")
+        dialog.description_input.delete("1.0", "end")
+        dialog.description_input.insert("1.0", "After")
+        dialog.priority.set("High")
+        self.database.connection.executescript("""
+            CREATE TRIGGER reject_edit AFTER UPDATE ON tasks
+            BEGIN SELECT RAISE(ABORT, 'test edit failure'); END;
+        """)
+        with patch("task_manager.gui._notice") as error:
+            dialog.save_button.invoke()
+        error.assert_called_once()
+        self.assertIn("No changes were saved", error.call_args.args[2])
+        self.assertTrue(dialog.winfo_exists())
+        self.assertEqual(self.service.get(task.id), task)
+
+    def test_form_submits_only_changed_fields_in_one_service_call(self):
+        task = self.service.create("Original", 1, description="Before")
+        dialog = self.app.edit_task(task)
+        dialog.title_input.delete("1.0", "end")
+        dialog.title_input.insert("1.0", "Edited")
+        dialog.priority.set("High")
+        with patch.object(self.service, "update", wraps=self.service.update) as update:
+            dialog.save_button.invoke()
+        update.assert_called_once_with(task.id, title="Edited", priority=3)
+        self.assertEqual(self.service.get(task.id), replace(task, title="Edited", priority=3))
+
     def test_long_title_wraps_inside_narrow_window(self):
         task = self.service.create("W" * 200, 3)
         self.app.refresh()

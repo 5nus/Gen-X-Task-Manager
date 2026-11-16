@@ -69,9 +69,7 @@ def _error(parent, error: Exception) -> None:
     if isinstance(error, KeyError):
         text = "This task no longer exists. Refresh the list."
     elif isinstance(error, sqlite3.Error):
-        text = ("Could not save changes. "
-                "Some fields may already have been saved. "
-                "Refresh the list and try again.")
+        text = "Could not save changes. No changes were saved. Please try again."
     else:
         text = str(error)
     _notice(parent, "Error", text)
@@ -129,7 +127,7 @@ class TaskDialog(tk.Toplevel):
         self.reminder_picker.grid(row=9, sticky="ew", pady=(2, 4))
         self.reminder_input = self.reminder_picker.entry
         tk.Label(form, text="Date: MM/DD/YYYY or MM-DD-YYYY. Time: local, 24-hour.\n"
-                 "Reminder times are stored; notifications are not available.",
+                 "Desktop reminders require the reminder service.",
                  justify="left", anchor="w").grid(row=10, sticky="w")
         buttons = tk.Frame(self, bg=GRAY, borderwidth=1, relief="sunken")
         buttons.grid(row=2, sticky="ew", padx=6, pady=6)
@@ -161,12 +159,13 @@ class TaskDialog(tk.Toplevel):
             else:
                 # Compare against the displayed snapshot; untouched fields stay untouched.
                 candidate = replace(self.task, **values)
+                changes = {}
                 if candidate.title.strip() != self.task.title:
-                    self.app.service.update_title(self.task.id, candidate.title)
+                    changes["title"] = candidate.title
                 for field in ("description", "priority", "due_at", "remind_at"):
                     if getattr(candidate, field) != getattr(self.task, field):
-                        method = "update_reminder" if field == "remind_at" else "update_" + field
-                        getattr(self.app.service, method)(self.task.id, getattr(candidate, field))
+                        changes[field] = getattr(candidate, field)
+                self.app.service.update(self.task.id, **changes)
         except (TypeError, ValueError, KeyError, sqlite3.Error) as error:
             _error(self, error)
             return
@@ -243,7 +242,7 @@ class TaskApp:
     def show_help(self) -> None:
         _notice(self.root, "About", "Gen X Task Manager\n\n"
                 "Priority: High (3), Normal (2), Low (1).\n"
-                "Reminder times are stored; notifications are not available.")
+                "Desktop reminders require the reminder service.")
 
     def _resize_content(self, event) -> None:
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))

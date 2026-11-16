@@ -1,23 +1,22 @@
 """Launch the desktop application with a persistent SQLite database."""
 
 import argparse
-import os
 import sqlite3
 import sys
 import tkinter as tk
 from pathlib import Path
 
-from .database import Database
+from .database import Database, default_database_path
 from .gui import TaskApp
 from .repository import TaskRepository
 from .service import TaskService
 
 
 def main() -> int:
-    data_home = Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share")
     parser = argparse.ArgumentParser(description="Gen X Task Manager")
-    parser.add_argument("--database", type=Path, default=data_home / "task-manager" / "tasks.sqlite3")
+    parser.add_argument("--database", type=Path, default=default_database_path())
     args = parser.parse_args()
+    args.database = args.database.expanduser().resolve()
     root = None
     try:
         root = tk.Tk()

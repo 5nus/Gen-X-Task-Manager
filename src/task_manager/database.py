@@ -1,8 +1,19 @@
 """SQLite connection ownership and initial schema."""
 
 import sqlite3
+import os
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Union
+
+
+def default_database_path() -> Path:
+    """Shared by the GUI and the independent reminder command."""
+    configured = os.environ.get("TASK_MANAGER_DATABASE")
+    if configured:
+        return Path(configured).expanduser()
+    data_home = Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share")
+    return data_home / "task-manager" / "tasks.sqlite3"
 
 
 class Database:
@@ -35,6 +46,24 @@ class Database:
                 )
                 """
             )
+            self.connection.execute(
+                """
+                CREATE INDEX IF NOT EXISTS tasks_pending_reminders
+                ON tasks (remind_at)
+                WHERE reminder_sent = 0 AND remind_at IS NOT NULL
+                """
+            )
+
+    @contextmanager
+    def transaction(self):
+        """Serialize a short read/write operation against other SQLite writers."""
+        self.connection.execute("BEGIN IMMEDIATE")
+        try:
+            yield
+            self.connection.commit()
+        except BaseException:
+            self.connection.rollback()
+            raise
 
     def close(self) -> None:
         self.connection.close()

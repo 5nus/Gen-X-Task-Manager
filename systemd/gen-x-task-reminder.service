@@ -1,0 +1,11 @@
+[Unit]
+Description=Gen X Task Manager desktop reminders
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=oneshot
+Environment=PYTHONPATH=%h/Gen-X-Task-Manager/src
+Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=%t/bus
+EnvironmentFile=-%h/.config/gen-x-task-manager/reminder.env
+ExecStart=/usr/bin/python3 -m task_manager.reminder
