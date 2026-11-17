@@ -1,32 +1,31 @@
 # Gen X Task Manager
 
-App: **genxtask v1.0.0** · [Release und Downloads](https://github.com/5nus/Gen-X-Task-Manager/releases/tag/v1.0.0) · [MIT-Lizenz](LICENSE)
+App: **genxtask v1.0.0** · [Release and downloads](https://github.com/5nus/Gen-X-Task-Manager/releases/tag/v1.0.0) · [MIT license](LICENSE)
 
-Ein Linux-Task-Manager im Windows-95-Look: Aufgaben erstellen, bearbeiten, nach
-Priorität sortieren und nach Bestätigung dauerhaft löschen. Mit Kalender,
-Uhrzeitauswahl, unabhängigen Desktop-Erinnerungen und Harold P. Wiggins, einem
-abwesenden Büroangestellten mit eigenem Messenger. Harold ist kein Assistent.
+A Linux task manager with a Windows 95 look: create and edit tasks, sort them by
+priority, and permanently delete them after confirmation. Includes a calendar,
+time selection, independent desktop reminders, and Harold P. Wiggins, an absent
+office worker with his own messenger. Harold is not an assistant.
 
-![genxtask mit Harold Messenger](docs/screenshots/genxtask.png)
+![genxtask with Harold Messenger](docs/screenshots/genxtask.png)
 
-[Harold-App-Icon als PNG herunterladen](packaging/genxtask.png).
-Projekt und Repository heißen weiterhin **Gen X Task Manager**; die installierte
-Anwendung und ihr Startbefehl heißen **genxtask**.
+[Download Harold's app icon as a PNG](packaging/genxtask.png).
+The project and repository remain **Gen X Task Manager**; the installed
+application and its launch command are named **genxtask**.
 
-## Voraussetzungen
+## Requirements
 
-- Linux, `/usr/bin/python3` ab Python 3.9, Tkinter und SQLite.
-- Für Erinnerungen zusätzlich: systemd-User-Manager, ein D-Bus-Session-Bus,
-  `notify-send` und ein Desktop-Benachrichtigungsdienst wie GNOME, KDE oder Xfce.
-- Debian/Ubuntu: Die Systempakete heißen `python3`, `python3-tk` und für
-  Erinnerungen `libnotify-bin`. Es werden keine zusätzlichen Python-Pakete benötigt.
-- Getestet mit Python 3.12, Tk 8.6 und X11. Wayland kann für Benachrichtigungen
-  verwendet werden; Fenster- und Taskleisten-Icons hängen vom Desktop und dessen
-  XWayland-/Tk-Unterstützung ab.
+- Linux, `/usr/bin/python3` version 3.9 or later, Tkinter, and SQLite.
+- Reminders additionally require a systemd user manager, a D-Bus session bus,
+  `notify-send`, and a desktop notification service such as GNOME, KDE, or Xfce.
+- Debian/Ubuntu packages: `python3`, `python3-tk`, and `libnotify-bin` for
+  reminders. No additional Python packages are required.
+- Tested with Python 3.12, Tk 8.6, and X11. Wayland can be used for notifications;
+  window and taskbar icons depend on the desktop and its XWayland/Tk support.
 
-## Installation ohne Root-Rechte
+## Install without root privileges
 
-Aus einem heruntergeladenen Repository:
+From a repository checkout:
 
 ```bash
 git clone https://github.com/5nus/Gen-X-Task-Manager.git
@@ -34,7 +33,7 @@ cd Gen-X-Task-Manager
 /usr/bin/python3 install.py
 ```
 
-Oder aus dem vorbereiteten Release-Archiv:
+Or from the release archive:
 
 ```bash
 tar -xzf genxtask-v1.0.0.tar.gz
@@ -42,91 +41,90 @@ cd genxtask-v1.0.0
 /usr/bin/python3 install.py
 ```
 
-Danach im Anwendungsmenü **genxtask** auswählen. Alternativ:
+Then select **genxtask** in your application menu. Alternatively:
 
 ```bash
 "$HOME/.local/bin/genxtask"
 "$HOME/.local/bin/genxtask" --version
 ```
 
-Wenn `~/.local/bin` bereits im `PATH` liegt, genügt `genxtask`. Die Menüverknüpfung
-verwendet einen absoluten, korrekt quotierten Pfad und benötigt keinen angepassten
-`PATH`, kein sichtbares Terminal und kein manuelles `PYTHONPATH`. Das Download- oder
-Repository-Verzeichnis kann nach der Installation entfernt werden.
+If `~/.local/bin` is already in your `PATH`, run `genxtask` directly. The desktop
+launcher uses an absolute, correctly quoted path. It requires no custom `PATH`,
+visible terminal, or manual `PYTHONPATH`. The download or checkout directory can
+be removed after installation.
 
-### Installierte Dateien und Updates
+### Installed files and updates
 
-| Inhalt | Standardpfad |
+| Contents | Default location |
 | --- | --- |
-| Python-Paket, Assets, Deinstaller, Installationsmanifest | `~/.local/share/genx.tasks/` |
-| GUI, Reminder und Deinstallationsbefehl | `~/.local/bin/genxtask`, `genxtask-reminder`, `genxtask-uninstall` |
-| Anwendungsmenü | `~/.local/share/applications/genxtask.desktop` |
-| Harold-Icons | `~/.local/share/icons/hicolor/{size}x{size}/apps/genxtask.png` |
-| Reminder-Units | `~/.config/systemd/user/gen-x-task-reminder.{service,timer}` |
-| Optionaler Sitzungs-Autostart, noch nicht aktiviert | `~/.local/share/genx.tasks/integration/gen-x-task-reminder.desktop` |
+| Python package, assets, uninstaller, installation manifest | `~/.local/share/genx.tasks/` |
+| GUI, reminder, and uninstall commands | `~/.local/bin/genxtask`, `genxtask-reminder`, `genxtask-uninstall` |
+| Application menu entry | `~/.local/share/applications/genxtask.desktop` |
+| Harold icons | `~/.local/share/icons/hicolor/{size}x{size}/apps/genxtask.png` |
+| Reminder units | `~/.config/systemd/user/gen-x-task-reminder.{service,timer}` |
+| Optional session autostart entry, not yet enabled | `~/.local/share/genx.tasks/integration/gen-x-task-reminder.desktop` |
 
-Der Installer berücksichtigt `XDG_DATA_HOME` und `XDG_CONFIG_HOME`. Die Startprogramme
-merken sich den bei der Installation gewählten Datenordner, damit GUI und Reminder
-auch außerhalb des Download-Verzeichnisses denselben Standard verwenden.
-Die technische Paketbezeichnung `task_manager`, bestehende Datenbankpfade und
-systemd-Unit-Namen bleiben erhalten.
-Der interne Programmordner `genx.tasks` bleibt für bestehende Installationen
-erhalten. Bei erneuter Installation werden die bisherigen Launcher und Icons
-durch die neuen `genxtask`-Einträge ersetzt; Aufgabendaten bleiben unverändert.
+The installer respects `XDG_DATA_HOME` and `XDG_CONFIG_HOME`. Launch commands
+remember the data directory selected during installation so the GUI and reminder
+use the same default even outside the download directory. The internal Python
+package name `task_manager`, existing database paths, and systemd unit names are
+preserved.
 
-Für ein Update die neue Version herunterladen und `install.py` erneut ausführen.
-Vorhandene Datenbanken und `reminder.env` bleiben erhalten. Bereits aktivierte
-Reminder-Timer werden nicht abgeschaltet; eine neue Installation aktiviert sie
-nicht automatisch. Nach einem Wechsel des XDG-Installationsorts die alte
-Installation zuerst deinstallieren und den vorhandenen Datenbankpfad ausdrücklich
-beibehalten.
+The internal program directory remains `genx.tasks` for compatibility with
+existing installations. Reinstalling replaces the previous launchers and icons
+with the new `genxtask` entries without changing task data.
 
-Harolds unverändertes Messenger-Avatar ist die einzige Icon-Quelle. Sein vorhandener
-quadratischer weißer Hintergrund wird übernommen; alle sieben Icon-Größen
-(16, 24, 32, 48, 64, 128 und 256 Pixel) verwenden Nearest-Neighbor-Skalierung.
-Tkinter setzt diese Icons auch als Fenster-Icon und Vorgabe für weitere Fenster.
-`StartupWMClass=genxtask` unterstützt die Zuordnung zur Taskleiste. Die endgültige
-Darstellung im Anwendungsmenü, in der Taskleiste und bei Alt-Tab bestimmt der Desktop.
+To update, download the new version and run `install.py` again. Existing databases
+and `reminder.env` are preserved. Previously enabled reminder timers are not
+stopped; a fresh installation does not enable them automatically. If you change
+the XDG installation location, uninstall the previous installation first and
+explicitly retain the existing database path.
 
-## Datenbankpfad
+Harold's unchanged messenger avatar is the only icon source. Its square white
+background is retained. All seven icon sizes (16, 24, 32, 48, 64, 128, and 256
+pixels) use nearest-neighbor scaling. Tkinter also sets these as the window icon
+and the default for additional windows. `StartupWMClass=genxtask` helps associate
+the app with its taskbar entry. The desktop controls its final appearance in the
+application menu, taskbar, and Alt-Tab view.
 
-Die bisherigen Aufgaben bleiben unter `$XDG_DATA_HOME/task-manager/tasks.sqlite3`
-beziehungsweise `~/.local/share/task-manager/tasks.sqlite3`. Sie liegen getrennt vom
-installierten Programm. Es gibt keine neue Datenbankmigration und keine automatische
-Löschung alter Daten.
+## Database path
 
-GUI und Reminder verwenden dieselbe Pfadermittlung, in dieser Reihenfolge:
+Existing tasks remain in `$XDG_DATA_HOME/task-manager/tasks.sqlite3` or
+`~/.local/share/task-manager/tasks.sqlite3`, separate from the installed program.
+No new database migration or automatic deletion of old data is performed.
 
-1. Expliziter Parameter `--database`.
-2. Umgebungsvariable `TASK_MANAGER_DATABASE`.
-3. Standardpfad im bei der Installation gewählten XDG-Datenordner.
+The GUI and reminder resolve their database path in this order:
+
+1. An explicit `--database` argument.
+2. The `TASK_MANAGER_DATABASE` environment variable.
+3. The default path in the XDG data directory selected during installation.
 
 ```bash
 "$HOME/.local/bin/genxtask" --database /absolute/path/tasks.sqlite3
 "$HOME/.local/bin/genxtask-reminder" --database /absolute/path/tasks.sqlite3
 ```
 
-**Ein eigener GUI-Pfad muss auch im Reminder konfiguriert werden.** Unabhängige
-Prozesse übernehmen keine Kommandozeilenargumente voneinander. Dazu in
-`${XDG_CONFIG_HOME:-$HOME/.config}/gen-x-task-manager/reminder.env` beispielsweise:
+**A custom GUI database path must also be configured for the reminder.**
+Independent processes do not inherit each other's command-line arguments. For
+example, add this to
+`${XDG_CONFIG_HOME:-$HOME/.config}/gen-x-task-manager/reminder.env`:
 
 ```ini
 TASK_MANAGER_DATABASE="/absolute/path/tasks.sqlite3"
 ```
 
-Das Verzeichnis bei Bedarf anlegen. Die Datei ist eine systemd-EnvironmentFile,
-kein Shell-Skript: kein `export`, kein `$HOME`, nur absolute Pfade. Bei einem
-Upgrade bleiben bestehende Einträge erhalten. Alte `PYTHONPATH`-Einträge sind nach
-der Installation nicht mehr erforderlich; die installierten Startprogramme laden
-ihre eigene Paketkopie.
+Create the directory if needed. This is a systemd environment file, not a shell
+script: no `export`, no `$HOME`, and only absolute paths. Existing entries are
+preserved during updates. Old `PYTHONPATH` entries are no longer needed after
+installation; the installed launch commands load their own package copy.
 
-## Erinnerungen aktivieren und prüfen
+## Enable and check reminders
 
-Die Installation stellt die Units bereit. Sie aktiviert den Timer nicht und
-verspricht ohne geeignete Desktop-Sitzung keine Benachrichtigungen. Die GUI
-funktioniert auch ohne aktivierte Erinnerungen.
+Installation provides the units. It does not enable the timer or promise
+notifications without a suitable desktop session. The GUI also works with
+reminders disabled.
 
-Im Terminal der grafischen Sitzung:
+Run these commands in a terminal within your graphical session:
 
 ```bash
 systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XAUTHORITY
@@ -135,30 +133,30 @@ systemctl --user enable --now gen-x-task-reminder.timer
 systemctl --user start gen-x-task-reminder.service
 ```
 
-Nicht gesetzte Variablen der jeweils anderen Display-Art werden ignoriert.
-Mindestens `DISPLAY` oder `WAYLAND_DISPLAY` muss im User-Manager gesetzt sein.
-Der Dienst verwendet den D-Bus-Bus desselben Benutzers unter `unix:path=%t/bus`.
-Sein Python-Pfad zeigt auf die installierte Paketkopie, nicht auf den Download.
+Unset variables for the other display type are ignored. At least `DISPLAY` or
+`WAYLAND_DISPLAY` must be set in the user manager. The service uses the same
+user's D-Bus bus at `unix:path=%t/bus`. Its Python path points to the installed
+package copy, not the download directory.
 
-Die Units sind an `graphical-session.target` angebunden. Prüfen:
+The units are connected to `graphical-session.target`. Check it with:
 
 ```bash
 systemctl --user is-active graphical-session.target
 ```
 
-Bei Desktops mit aktivem Target startet der aktivierte Timer mit der Sitzung.
-**Bei Xfce und anderen Sitzungen ohne dieses Target** den bereitgestellten
-Autostart-Eintrag zusätzlich installieren:
+On desktops with an active target, the enabled timer starts with the session.
+**For Xfce and other sessions without this target**, also install the supplied
+autostart entry:
 
 ```bash
 mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/autostart"
 install -m 644 "${XDG_DATA_HOME:-$HOME/.local/share}/genx.tasks/integration/gen-x-task-reminder.desktop" "${XDG_CONFIG_HOME:-$HOME/.config}/autostart/"
 ```
 
-Dieser übernimmt beim nächsten grafischen Login die Sitzungsumgebung und startet
-denselben Timer. Er setzt keinen Repository-Pfad voraus. Wiederholtes Starten
-führt nicht zu mehreren Timer-Instanzen. Ein SSH-Login ersetzt keine grafische
-Sitzung; `loginctl enable-linger` ist nicht nötig.
+At the next graphical login, this entry imports the session environment and starts
+the same timer. It does not require a repository path. Repeated starts do not
+create multiple timer instances. An SSH login is not a graphical session;
+`loginctl enable-linger` is not required.
 
 ```bash
 systemctl --user status gen-x-task-reminder.timer
@@ -167,183 +165,176 @@ systemctl --user status gen-x-task-reminder.service
 journalctl --user -u gen-x-task-reminder.service -n 50 --no-pager
 ```
 
-Der `oneshot`-Service ist zwischen erfolgreichen Läufen normalerweise `inactive
-(dead)`; der Timer soll aktiv sein. Ein manueller einmaliger Prüflauf ist möglich:
+The `oneshot` service is normally `inactive (dead)` between successful runs; the
+timer should be active. To run one reminder check manually:
 
 ```bash
 "$HOME/.local/bin/genxtask-reminder"
 ```
 
-### Fehler eingrenzen
+### Troubleshooting
 
-- **Keine Datenbank:** Im Journal genannten absoluten Pfad mit dem GUI-Aufruf und
-  `reminder.env` vergleichen. Der Reminder erzeugt keine leere Ersatzdatenbank.
-- **Python-Modul fehlt:** Installation erneut ausführen. Die Download-Dateien sind
-  nicht nötig; die installierte Kopie unter `genx.tasks/lib/` muss vorhanden sein.
-- **Kein Display / D-Bus:** Sitzungsumgebung aus einem Desktop-Terminal importieren;
-  bei Xfce zusätzlich den Autostart-Eintrag verwenden.
-- **`notify-send` fehlt:** Systempaket installieren, unter Debian/Ubuntu
-  `libnotify-bin`. Ein direkter Test im grafischen Terminal:
+- **Database not found:** Compare the absolute path in the journal with the GUI
+  command and `reminder.env`. The reminder does not create an empty replacement
+  database.
+- **Python module missing:** Reinstall the app. The download directory is not
+  needed, but the installed copy under `genx.tasks/lib/` must exist.
+- **No display or D-Bus:** Import the session environment from a desktop terminal.
+  For Xfce, also use the autostart entry.
+- **`notify-send` missing:** Install the system package, `libnotify-bin` on
+  Debian/Ubuntu. To test directly in a graphical terminal:
 
   ```bash
   notify-send -- "Task Reminder" "Manual notification test"
   ```
 
-- **Aufruf erfolgreich, kein Banner:** Nicht-stören-Modus und Einstellungen des
-  Benachrichtigungsdienstes prüfen. Annahme ist kein Nachweis tatsächlicher Wahrnehmung.
-- **`database is locked`:** Nach Ende des anderen Schreibzugriffs erneut speichern.
-  Formularänderungen bleiben bei Fehlern vollständig ungespeichert. Ein Reminder
-  hält seine Schreibsperre während eines auf fünf Sekunden begrenzten Aufrufs.
-- **Launcher/Icon fehlt:** Erneut anmelden oder Installation erneut ausführen.
-  Vorhandene Werkzeuge `update-desktop-database` und `gtk-update-icon-cache` werden
-  automatisch verwendet; bei fehlenden Werkzeugen kann der Desktop seinen Cache
-  erst beim nächsten Login erneuern.
+- **Successful call, no banner:** Check do-not-disturb mode and notification
+  service settings. Acceptance does not prove that the user saw the notification.
+- **`database is locked`:** Save again after the other write finishes. Failed
+  form edits remain entirely unsaved. A reminder holds its write lock during a
+  notification call that is limited to five seconds.
+- **Launcher or icon missing:** Log in again or reinstall. The installer uses
+  `update-desktop-database` and `gtk-update-icon-cache` when available. Without
+  those tools, the desktop may not refresh its cache until the next login.
 
-### Erinnerungen deaktivieren
+### Disable reminders
 
 ```bash
 systemctl --user disable --now gen-x-task-reminder.timer
 systemctl --user stop gen-x-task-reminder.service
 ```
 
-Einen zuvor installierten Autostart-Eintrag außerdem in den Desktop-Einstellungen
-deaktivieren oder entfernen, damit er den Timer nicht beim nächsten Login startet.
+Also disable or remove any previously installed autostart entry in your desktop
+settings so it does not start the timer again at the next login.
 
-## Deinstallation
+## Uninstall
 
 ```bash
 "$HOME/.local/bin/genxtask-uninstall"
 ```
 
-Alternativ aus dem ursprünglichen Download:
+Alternatively, from the original download:
 
 ```bash
 /usr/bin/python3 install.py --uninstall
 ```
 
-Der Deinstaller stoppt und deaktiviert den Reminder-Timer, entfernt Programm,
-Launcher, Icons, Units und den optionalen Autostart. Aufgabendatenbanken und
-`reminder.env` bleiben erhalten. Es werden ausschließlich registrierte
-Installationsdateien entfernt; unbekannte Dateien im Programmordner werden nicht
-pauschal gelöscht. Die installierte Deinstallation funktioniert auch dann, wenn
-der ursprüngliche Download nicht mehr existiert.
+The uninstaller stops and disables the reminder timer, then removes the program,
+launchers, icons, units, and optional autostart entry. Task databases and
+`reminder.env` are preserved. Only registered installation files are removed;
+unknown files in the program directory are not deleted wholesale. The installed
+uninstaller works even after the original download has been removed.
 
-Für isolierte Tests oder Offline-Staging kann `install.py --no-systemd` verwendet
-werden; beim Deinstallieren gilt `--uninstall --no-systemd`. Diese Option überspringt
-ausschließlich die Kommunikation mit dem User-Manager. Bei einer normalen
-Deinstallation sollte der Reminder vorher zuverlässig gestoppt werden.
+For isolated tests or offline staging, use `install.py --no-systemd`; uninstall
+with `--uninstall --no-systemd`. This skips only communication with the user
+manager. During a normal uninstall, the reminder should be stopped reliably.
 
-## Ablauf und Zustellgrenzen
+## Reminder processing and delivery limits
 
-Ein User-Timer startet ungefähr jede Minute einen kurzen Prüflauf. Zwischen den
-Läufen läuft kein zusätzlicher Python-Prozess. Das ist für V1 einfacher als ein
-ständig laufender Daemon mit eigener Schleife, Neustartlogik oder Threads.
-`OnStartupSec=10s` sorgt für einen ersten Lauf; `OnUnitInactiveSec=60s` und
-`AccuracySec=5s` für weitere Prüfungen. Es gibt keine sekundengenaue Termingarantie.
-Der Timer weckt den Rechner nicht aus dem Standby.
+A user timer starts a short check roughly every minute. No additional Python
+process runs between checks. For V1 this is simpler than a permanent daemon with
+its own loop, restart handling, or threads. `OnStartupSec=10s` provides an initial
+run; `OnUnitInactiveSec=60s` and `AccuracySec=5s` schedule subsequent checks. Timing
+is not guaranteed to the second. The timer does not wake the computer from sleep.
 
-1. Eine indexgestützte SQL-Abfrage wählt ausschließlich fällige, noch nicht
-   versendete Aufgaben mit gesetztem `remind_at`. Vergleiche erfolgen in UTC.
-2. Für jede Aufgabe beginnt eine kurze SQLite-Transaktion mit `BEGIN IMMEDIATE`.
-   Darin werden Existenz, Zeitpunkt und Versandstatus erneut gelesen. Bereits
-   gelöschte, verschobene oder inzwischen verarbeitete Erinnerungen werden übersprungen.
-3. `notify-send` übergibt „Task Reminder“ und den aktuellen Aufgabentitel an den
-   Desktop-Dienst. Argumente werden ohne Shell übergeben; Titel-Markup wird maskiert.
-4. Erst nach erfolgreichem Aufruf wird `reminder_sent` für den erwarteten Zeitpunkt
-   gesetzt und die Transaktion committed. Aufruf- oder Datenbankfehler lassen den
-   Status offen. Andere Reminder-Prozesse und GUI-Schreiber werden dabei serialisiert.
+1. An indexed SQL query selects only due, unsent tasks with `remind_at` set.
+   Comparisons use UTC.
+2. A short SQLite transaction with `BEGIN IMMEDIATE` starts for each task. It
+   rechecks existence, scheduled time, and delivery status. Deleted, rescheduled,
+   or already processed reminders are skipped.
+3. `notify-send` submits “Task Reminder” and the current task title to the desktop
+   service. Arguments are passed without a shell, and title markup is escaped.
+4. Only after a successful call is `reminder_sent` set for the expected time and
+   the transaction committed. Notification or database errors leave the reminder
+   open. Other reminder processes and GUI writers are serialized during this step.
 
-`notify-send` verwendet den üblichen Linux-Benachrichtigungsdienst und erspart
-eine zusätzliche D-Bus-Python-Bibliothek. Die Schnittstelle ist in der
-[Desktop Notifications Specification](https://specifications.freedesktop.org/notification/latest/protocol.html)
-beschrieben; Optionen dokumentiert die [notify-send-Manpage](https://manpages.debian.org/trixie/libnotify-bin/notify-send.1.en.html).
-Timer und Sitzungseinbindung folgen der
-[systemd-Timer-Dokumentation](https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html)
-und den [Hinweisen zu Desktop-Sitzungen](https://github.com/systemd/systemd/blob/main/docs/DESKTOP_ENVIRONMENTS.md).
+`notify-send` uses the standard Linux notification service without requiring an
+additional Python D-Bus library. The interface is described in the
+[Desktop Notifications Specification](https://specifications.freedesktop.org/notification/latest/protocol.html);
+options are documented in the [notify-send manual](https://manpages.debian.org/trixie/libnotify-bin/notify-send.1.en.html).
+Timer and session integration follow the
+[systemd timer documentation](https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html)
+and [desktop session guidance](https://github.com/systemd/systemd/blob/main/docs/DESKTOP_ENVIRONMENTS.md).
 
-Während Ausschalten oder Standby überfällige Erinnerungen werden beim nächsten
-geeigneten Lauf nachgeholt. Erfolgreich gespeicherte Versandstatus verhindern
-erneute Meldungen bei normalen Neustarts. Fehlt die Sitzungsumgebung oder schlägt
-der Benachrichtigungsaufruf fehl, bleibt die Zustellung offen. V1 richtet sich an eine grafische
-Sitzung pro Benutzer; die Auswahl zwischen mehreren parallelen Desktops wird
-nicht verwaltet.
+Reminders that became overdue while the computer was shut down or asleep are
+processed at the next suitable run. Successfully saved delivery status prevents
+repeat notifications during normal restarts. If the session environment is
+missing or the notification call fails, delivery remains pending. V1 targets one
+graphical session per user; it does not manage selection between parallel desktops.
 
-**Keine Exactly-once-Garantie:** Datenbank und Desktop-Dienst besitzen keine gemeinsame
-Transaktion. Ein Absturz nach Annahme der Benachrichtigung, aber vor dem Commit,
-kann bei erneutem Versuch eine doppelte Meldung verursachen. Auch ein Timeout
-kann auftreten, nachdem der Desktop eine Anfrage bereits angenommen hat.
-Nicht-stören-Modus und andere Desktop-Regeln können sichtbare Meldungen unterdrücken.
-Eine bereits abgesendete Benachrichtigung lässt sich durch späteres Löschen oder
-Ändern der Aufgabe nicht zurücknehmen.
+**No exactly-once guarantee:** The database and desktop service do not share a
+transaction. A crash after notification acceptance but before the commit can
+cause a duplicate on retry. A timeout can also occur after the desktop has
+already accepted a request. Do-not-disturb mode and other desktop rules may hide
+notifications. Deleting or changing a task cannot retract a notification that
+has already been submitted.
 
-## Aufgabenbearbeitung und Persistenz
+## Task editing and persistence
 
-`TaskService` validiert Titel und Modellwerte vor dem Schreiben. Titel werden
-getrimmt und müssen 1–200 Zeichen enthalten. `TaskService.update(id, **changes)`
-übernimmt ausschließlich explizit geänderte Felder: Titel, Beschreibung, Priorität,
-Fälligkeit und Erinnerungszeitpunkt. Ein Formular speichert diese gemeinsam mit
-einem einzigen parametrisierten SQL-UPDATE in einer Transaktion. Bei einem Fehler
-bleibt keine Teiländerung bestehen. `id` und `created_at` sind unveränderlich.
+`TaskService` validates titles and model values before writing. Titles are trimmed
+and must contain 1–200 characters. `TaskService.update(id, **changes)` accepts only
+explicitly edited fields: title, description, priority, due time, and reminder
+time. A form saves them together in a single parameterized SQL UPDATE within one
+transaction. An error leaves no partial changes. `id` and `created_at` are immutable.
 
-Die Service-Schicht fordert bei Änderungen des Erinnerungsfeldes einen bedingten
-Reset an. Das Repository vergleicht dafür den tatsächlich gespeicherten Zeitpunkt
-atomar im SQL-UPDATE. Nur ein geänderter Zeitpunkt setzt `reminder_sent=False`.
-Unveränderte Erinnerungszeiten und andere Feldänderungen erhalten einen inzwischen
-vom Reminder gesetzten Status. Konkurrierende Änderungen desselben Aufgabenfeldes
-folgen weiterhin dem letzten Schreibzugriff. Mehrere getrennte Service-Aufrufe
-bilden keine gemeinsame Formulartransaktion.
+The service requests a conditional delivery-status reset when the reminder field
+is edited. The repository compares the actual stored timestamp atomically in the
+SQL UPDATE. Only a changed timestamp sets `reminder_sent=False`. Unchanged reminder
+times and unrelated edits preserve a status set by the reminder in the meantime.
+Concurrent edits to the same task field still use the last write. Separate service
+calls do not form a single form-edit transaction.
 
-SQLite ist die einzige persistente Datenquelle. UUID4-IDs und zeitzonenbewusste
-ISO-Zeitstempel liegen als Text vor; Zeitstempel sind auf UTC mit Mikrosekunden
-normalisiert. Boolean-Werte liegen als 0/1 vor. Fehlende Aufgaben erzeugen im
-Service `KeyError`, ungültige Werte `TypeError` oder `ValueError`. SQLite-Fehler
-werden weitergegeben. Das Repository enthält keine GUI- oder Benachrichtigungslogik.
+SQLite is the only persistent data source. UUID4 IDs and timezone-aware ISO
+timestamps are stored as text; timestamps are normalized to UTC with microseconds.
+Booleans are stored as 0/1. Missing tasks raise `KeyError` in the service; invalid
+values raise `TypeError` or `ValueError`. SQLite errors propagate to the caller.
+The repository contains no GUI or notification logic.
 
-Erledigen bedeutet dauerhaft löschen. Eine Bestätigung in der GUI ist erforderlich.
-Gelöschte Aufgaben erscheinen nicht mehr in der Reminder-Abfrage und veraltete
-Schreibzugriffe können sie nicht wiederherstellen.
+Completing a task means permanently deleting it. The GUI requires confirmation.
+Deleted tasks no longer appear in reminder queries, and stale writes cannot
+recreate them.
 
-## Kalender und GUI
+## Calendar and GUI
 
-Die englische Oberfläche behält graue Fenster, dunkelblaue Titel, 3D-Schaltflächen
-und mehrzeilige Titel. Aufgaben mit hoher Priorität stehen zuerst; Low, Normal
-und High entsprechen 1, 2 und 3.
+The English interface retains gray windows, dark blue titles, 3D buttons, and
+wrapped task titles. High-priority tasks appear first; Low, Normal, and High
+correspond to 1, 2, and 3.
 
-Fälligkeit und Erinnerung besitzen einen Kalender mit Monatsnavigation und Today.
-Die Eingabe akzeptiert `MM/DD/YYYY`, `MM-DD-YYYY` und ISO-Daten; im US-Format steht
-der Monat zuerst. Stunden und Minuten werden mit Spinboxen gewählt oder eingegeben.
-Neue Eingaben verwenden die lokale Linux-Zeitzone einschließlich Sommerzeit;
-Zeitpunkte in einer Sommerzeitlücke werden abgelehnt. Clear entfernt den Zeitpunkt.
-Vollständige ISO-Zeitpunkte mit Offset bleiben einfügbar. Unveränderte Zeitpunkte
-behalten Sekunden und Mikrosekunden.
+Due and reminder fields have calendars with month navigation and a Today button.
+Input accepts `MM/DD/YYYY`, `MM-DD-YYYY`, and ISO dates; US-style dates use the
+month first. Hours and minutes can be selected with spinboxes or typed. New
+entries use the local Linux timezone, including daylight saving time; times in a
+spring-forward gap are rejected. Clear removes the timestamp. Complete ISO
+timestamps with an offset can still be pasted. Unchanged timestamps preserve
+seconds and microseconds.
 
 ## Harold Messenger
 
-Harold bleibt ein separater, nicht modaler Messenger mit Pixel-Avatar, „Away“,
-„Last seen: Unknown“, scrollbarem Verlauf und lokalen Uhrzeiten. Mehrfaches Öffnen
-zeigt dasselbe Fenster. Der Avatar und sein Generierungsprompt liegen in
-`src/task_manager/assets/` und benötigen keine zusätzliche Bildbibliothek.
+Harold is a separate, non-modal messenger with a pixel avatar, “Away” status,
+“Last seen: Unknown”, a scrollable history, and local timestamps. Opening it again
+shows the same window. The avatar and its generation prompt are in
+`src/task_manager/assets/`; no additional image library is needed.
 
-Harold schreibt unabhängig von Benutzernachrichten höchstens drei belanglose
-Nachrichten pro Anwendungssitzung, in zufälligen Abständen von 3–10 Minuten.
-Jeder Sendeversuch öffnet einen separaten „Messenger Service“-Dialog. Diese Meldung
-landet niemals im Chatverlauf; direkte Antworten von Harold gibt es nicht.
-OK, Escape und das Schließen-Kreuz schließen den Systemdialog.
+Harold sends at most three irrelevant messages per app session, at random
+intervals of 3–10 minutes, independently of user messages. Every send attempt
+opens a separate “Messenger Service” dialog. That notice never enters the chat
+history; Harold never replies directly. OK, Escape, and the window close button
+dismiss the system dialog.
 
-Verlauf und Nachrichtenlimit bleiben beim Schließen des Chats im Arbeitsspeicher.
-`after()`-Timer laufen ohne Threads und werden beim Beenden der GUI abgebrochen.
-Harold hat keinen Zugriff auf den Reminder-Prozess und sendet keine Desktop-Meldungen.
+History and the message limit remain in memory when the chat closes. `after()`
+timers run without threads and are canceled when the GUI exits. Harold does not
+access the reminder process or send desktop notifications.
 
-## Entwicklung, Tests und Release-Verfahren
+## Development, tests, and releases
 
-Aus dem Repository kann weiterhin ohne Installation gestartet werden:
+You can still run from the repository without installing:
 
 ```bash
 PYTHONPATH=src python3 -m task_manager
 PYTHONPATH=src python3 -m unittest discover -s tests -v
 ```
 
-Alle GUI- und Installationstests mit Xvfb ausführen:
+Run all GUI and installation tests with Xvfb:
 
 ```bash
 xvfb-run -a env PYTHONPATH=src python3 -m unittest discover -s tests -v
@@ -351,35 +342,33 @@ desktop-file-validate packaging/genxtask.desktop
 desktop-file-validate systemd/gen-x-task-reminder.desktop
 ```
 
-Für die vollständigen Linux-Integrationstests werden außerdem `xwininfo` und
-`xprop` benötigt (Debian/Ubuntu: `x11-utils`). GIO- und systemd-Validator-Tests
-werden nur ausgeführt, wenn die entsprechenden Systemwerkzeuge vorhanden sind.
+Full Linux integration tests also require `xwininfo` and `xprop` (Debian/Ubuntu:
+`x11-utils`). GIO and systemd validator tests run only when their corresponding
+system tools are available.
 
-Installationstests verwenden frische Benutzerverzeichnisse mit Leerzeichen und
-kontaktieren dabei keinen echten systemd-User-Manager. Desktop-Launcher werden
-validiert und, wenn GIO vorhanden ist, von GIO ausgeführt. Die installierte GUI
-wird ohne manuelles `PYTHONPATH` aus einem anderen Arbeitsverzeichnis gestartet;
-X11-Fensterklasse und Icon-Eigenschaften werden geprüft. Reminder-Aufrufe verwenden
-ein gemocktes Benachrichtigungswerkzeug. Wiederholte Installation, Deinstallation
-mit Datenerhalt und Start nach Entfernen des Downloads werden ebenfalls geprüft.
+Installation tests use fresh user directories with spaces in their paths and do
+not contact a real systemd user manager. Desktop launchers are validated and
+executed by GIO when it is available. The installed GUI starts from an unrelated
+working directory without manual `PYTHONPATH`; X11 window class and icon
+properties are checked. Reminder calls use a mock notification tool. Repeated
+installation, uninstalling without data loss, and starting after the download has
+been removed are also tested.
 
-Prüfstand für dieses Review: **113 Tests bestanden**, einschließlich frischer
-Installation, wiederholter Installation, GIO-Launcher, installierter GUI, Icons,
-Reminder, Deinstallation und reproduzierbarem Archiv. Zusätzlich wurde eine
-temporäre Installation in der echten X11-Desktop-Sitzung aus `/` ohne
-`PYTHONPATH` gestartet. Fensterklasse und Fenster-Icon wurden geprüft. Das
-konkrete Aussehen in jeder Taskleiste und Alt-Tab-Oberfläche sowie Wayland wurden
-nicht manuell überprüft. Der dauerhafte Reminder-Autostart wurde für dieses
-Installationsreview nicht im echten Benutzerkonto aktiviert.
+Release verification: **113 tests passed**, covering fresh and repeated
+installation, the GIO launcher, installed GUI, icons, reminders, uninstallation,
+and reproducible archives. A temporary installation was also started in the real
+X11 desktop session from `/` without `PYTHONPATH`. Window class and window icon
+were checked. Appearance in every taskbar and Alt-Tab implementation, as well as
+Wayland, was not manually verified. Persistent reminder autostart was not enabled
+in the real user account for this installation review.
 
-Zusätzlicher Test in einem separaten Arch-Linux-Container: **72 Tests bestanden**,
-41 Tests mangels grafischer Sitzung beziehungsweise optionaler Werkzeuge
-übersprungen. Installation des Release-Archivs in einem frischen Benutzerordner,
-Startbefehle ohne `PYTHONPATH`, Reminder-Aufruf und Deinstallation funktionieren
-auch dort. Das ist ein zusätzlicher Linux-Umgebungstest, kein Test auf einem
-zweiten physischen Rechner.
+Additional verification in a separate Arch Linux container: **72 tests passed**;
+41 were skipped because a graphical session or optional tools were unavailable.
+Installing the release archive in a fresh user directory, launch commands without
+`PYTHONPATH`, the reminder command, and uninstallation also worked there. This is
+an additional Linux environment test, not a test on a second physical computer.
 
-### Reproduzierbares Release-Archiv
+### Reproducible release archive
 
 ```bash
 python3 scripts/build_release.py
@@ -387,41 +376,46 @@ cd dist
 sha256sum -c genxtask-v1.0.0.tar.gz.sha256
 ```
 
-Das Skript liest die Version aus `task_manager.__version__` und erzeugt
-`dist/genxtask-v1.0.0.tar.gz` mit zugehöriger SHA-256-Datei. Es enthält Quellcode,
-Installer, Icons, Units, Dokumentation und Tests. Eine feste Dateiauswahl und
-normalisierte Archiv-Metadaten halten `.git`, Benutzerdaten und Cache-Dateien
-heraus. Zwei Builds desselben Stands sind bytegleich. Ein grafisches Display ist
-zum Erstellen des Archivs nicht nötig.
-Zusätzlich liegt Harolds App-Icon separat als `dist/genxtask.png` zum Download vor.
+The script reads `task_manager.__version__` and creates
+`dist/genxtask-v1.0.0.tar.gz` with a SHA-256 file. It contains source code, the
+installer, icons, units, documentation, and tests. A fixed file selection and
+normalized archive metadata exclude `.git`, user data, and cache files. Two
+builds of the same source state are byte-identical. Building the archive does not
+require a display. Harold's app icon is also available separately as
+`dist/genxtask.png`.
 
-Die Icon-Dateien sind eingecheckt. Nur bei einer bewussten Änderung der zugrunde
-liegenden Grafik werden sie mit dem Standardbibliothek-Werkzeug neu erstellt:
+The icon files are committed to the repository. Only regenerate them when
+intentionally changing the underlying artwork, using the standard-library tool:
 
 ```bash
 xvfb-run -a python3 scripts/generate_icons.py
 ```
 
-Das Build-Skript erstellt weder einen Git-Tag noch ein GitHub-Release. Das
-veröffentlichte Archiv und das separate Harold-Icon liegen im
-[GitHub-Release v1.0.0](https://github.com/5nus/Gen-X-Task-Manager/releases/tag/v1.0.0).
+The build script creates neither a Git tag nor a GitHub release. The published
+archive and separate Harold icon are available in the
+[GitHub release v1.0.0](https://github.com/5nus/Gen-X-Task-Manager/releases/tag/v1.0.0).
 
-## Lizenz
+This English documentation was added after v1.0.0 was published. The original
+release archive, tag, and checksums are preserved, so its bundled README remains
+in German. Use this page for the current English instructions. To reproduce the
+published archive byte for byte, build from tag `v1.0.0`; building from `main`
+includes this translated README instead.
 
-MIT, Copyright (c) 2026 Simon Korber. Der vollständige Lizenztext liegt in
-[`LICENSE`](LICENSE) und wird sowohl im Release-Archiv als auch mit der
-Benutzerinstallation mitgeliefert.
+## License
+
+MIT, Copyright (c) 2026 Simon Korber. The complete text is in [`LICENSE`](LICENSE)
+and is included in both the release archive and the user installation.
 
 ```text
-install.py                     Benutzerinstallation und Deinstallation
-packaging/genxtask.desktop    Desktop-Launcher
-scripts/generate_icons.py      Skalierung des unveränderten Harold-Avatars
-scripts/build_release.py       Reproduzierbares Release-Archiv
-src/task_manager/              Anwendung und Assets
-systemd/                       Reminder-Units und optionaler Sitzungs-Autostart
-tests/                         unittest-Tests
-docs/screenshots/              Oberfläche
+install.py                     User installation and uninstallation
+packaging/genxtask.desktop      Desktop launcher
+scripts/generate_icons.py      Scale the unchanged Harold avatar
+scripts/build_release.py       Reproducible release archive
+src/task_manager/              Application and assets
+systemd/                       Reminder units and optional session autostart
+tests/                         unittest tests
+docs/screenshots/              Interface screenshots
 ```
 
-Nicht Teil von V1: wiederkehrende Aufgaben, Cloud-Synchronisierung, Benutzerkonten,
-Statistiken, IPC, neue GUI-Frameworks, AppImage, Flatpak, Snap und Distributionspakete.
+Outside V1: recurring tasks, cloud synchronization, user accounts, statistics,
+IPC, new GUI frameworks, AppImage, Flatpak, Snap, and distribution packages.
