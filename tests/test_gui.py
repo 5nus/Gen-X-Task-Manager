@@ -163,7 +163,7 @@ class GuiTests(unittest.TestCase):
             self.assertIn("Could not save changes", notice.call_args.args[2])
             self.assertNotIn("non-English driver detail", notice.call_args.args[2])
             self.app.show_help()
-            self.assertIn("Gen X Task Manager", notice.call_args.args[2])
+            self.assertIn("genxtask", notice.call_args.args[2])
 
     def test_invalid_title_displays_error_and_keeps_form(self):
         dialog = self.app.new_task()

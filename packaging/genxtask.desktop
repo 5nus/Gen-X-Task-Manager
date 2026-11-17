@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=genxtask
+Comment=Tasks, reminders and an absent office colleague
+Exec=genxtask
+Icon=genxtask
+Terminal=false
+Categories=Office;Utility;
+StartupNotify=false
+StartupWMClass=genxtask

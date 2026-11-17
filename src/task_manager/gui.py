@@ -3,9 +3,11 @@
 import sqlite3
 import tkinter as tk
 from dataclasses import replace
+from pathlib import Path
 from typing import Optional
 
 from .harold import HaroldMessenger
+from . import __version__
 from .date_picker import DateTimeInput
 from .models import Task
 from .service import TaskService
@@ -185,7 +187,12 @@ class TaskApp:
         root.option_add("*selectBackground", NAVY)
         root.option_add("*selectForeground", WHITE)
         root.configure(bg=GRAY, borderwidth=2, relief="raised")
-        root.title("Gen X Task Manager")
+        root.title("genxtask")
+        icon_directory = Path(__file__).parent / "assets" / "icons"
+        self._icons = [tk.PhotoImage(master=root, file=str(icon_directory / f"genxtask-{size}.png"))
+                       for size in (256, 64, 32, 16)]
+        root.iconphoto(True, *self._icons)
+        root.iconname("genxtask")
         root.geometry("820x620")
         root.minsize(480, 400)
         root.columnconfigure(0, weight=1)
@@ -194,7 +201,7 @@ class TaskApp:
         self._menus()
         header = tk.Frame(root, bg=NAVY, borderwidth=1, relief="solid")
         header.grid(row=0, sticky="ew", padx=4, pady=4)
-        tk.Label(header, text="Gen X Task Manager", bg=NAVY,
+        tk.Label(header, text="genxtask", bg=NAVY,
                  fg=WHITE, anchor="w", font=("Helvetica", 11, "bold"), wraplength=440,
                  justify="left", padx=6, pady=4).pack(fill="x")
         toolbar = tk.Frame(root, bg=GRAY, borderwidth=2, relief="raised")
@@ -240,7 +247,7 @@ class TaskApp:
         self.root.configure(menu=self.menu)
 
     def show_help(self) -> None:
-        _notice(self.root, "About", "Gen X Task Manager\n\n"
+        _notice(self.root, "About", f"genxtask v{__version__}\n\n"
                 "Priority: High (3), Normal (2), Low (1).\n"
                 "Desktop reminders require the reminder service.")
 

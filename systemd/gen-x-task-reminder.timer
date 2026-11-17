@@ -1,5 +1,5 @@
 [Unit]
-Description=Check Gen X Task Manager reminders every minute
+Description=Check genxtask reminders every minute
 After=graphical-session.target
 PartOf=graphical-session.target
 

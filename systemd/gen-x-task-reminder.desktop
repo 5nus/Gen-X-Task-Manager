@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Name=Gen X Task Manager Reminders
+Name=genxtask Reminders
 Comment=Start desktop reminders for this graphical login
 Exec=/bin/sh -c "systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XAUTHORITY XDG_DATA_HOME; exec systemctl --user start gen-x-task-reminder.timer"
 Terminal=false

@@ -240,7 +240,7 @@ class NotificationTests(unittest.TestCase):
             with patch("task_manager.reminder.subprocess.run") as run:
                 send_notification("<b>--urgency=critical; $(touch /tmp/not-run)</b>")
         args = run.call_args.args[0]
-        self.assertEqual(args[:4], ["notify-send", "--app-name=Gen X Task Manager", "--", "Task Reminder"])
+        self.assertEqual(args[:4], ["notify-send", "--app-name=genxtask", "--", "Task Reminder"])
         self.assertEqual(args[4], "&lt;b&gt;--urgency=critical; $(touch /tmp/not-run)&lt;/b&gt;")
         self.assertTrue(run.call_args.kwargs["check"])
         self.assertEqual(run.call_args.kwargs["timeout"], 5)

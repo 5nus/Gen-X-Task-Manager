@@ -23,7 +23,7 @@ def send_notification(title: str) -> None:
     if not os.environ.get("DBUS_SESSION_BUS_ADDRESS"):
         raise OSError("DBUS_SESSION_BUS_ADDRESS is missing from the reminder environment")
     subprocess.run(
-        ["notify-send", "--app-name=Gen X Task Manager", "--",
+        ["notify-send", "--app-name=genxtask", "--",
          "Task Reminder", html.escape(title, quote=False)],
         check=True, timeout=5, capture_output=True, text=True,
     )
@@ -64,7 +64,7 @@ def run_once(database: Database, *, now=None, notify=None) -> int:
 
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(description="Send due Gen X Task Manager reminders once")
+    parser = argparse.ArgumentParser(description="Send due genxtask reminders once")
     parser.add_argument("--database", type=Path, default=default_database_path())
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
